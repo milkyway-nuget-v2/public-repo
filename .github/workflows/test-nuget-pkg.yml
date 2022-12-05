@@ -1,0 +1,39 @@
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        files: [1133, 1134, 1135, 1136, 1137, 1138, 1139, 1140]
+
+    steps:
+      - run: |
+          mkdir content
+          cat > ./content/Protoculture.Postgres.Embedded.nuspec << EOM
+          <?xml version="1.0" encoding="utf-8"?> /
+          <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+            <metadata>
+              <id>nuget-nuspec-size-test</id>
+              <version>0.${{ github.run_number }}.${{ matrix.files }}</version> 
+              <repository type="git" url="https://github.com/${{ github.repository }}" />
+            </metadata>
+          </package>
+          EOM
+          
+          for i in {1..${{ matrix.files }}}
+          do
+            echo '<!-- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->' >> ./content/Protoculture.Postgres.Embedded.nuspec
+          done
+
+      - run: |
+          cd content
+          zip -r ../package.nupkg .
+ 
+      - run: ls -lh ./content/Protoculture.Postgres.Embedded.nuspec
+
+      - run: dotnet nuget push package.nupkg -s https://nuget.pkg.github.com/${{ github.repository_owner }} -k ${{ secrets.GITHUB_TOKEN }}
